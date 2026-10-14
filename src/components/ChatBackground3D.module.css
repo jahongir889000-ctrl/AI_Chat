@@ -1,0 +1,36 @@
+.canvasWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-bg-panel);
+}
+
+.canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 70% at 50% 45%,
+    transparent 0%,
+    color-mix(in srgb, var(--color-bg-panel) 25%, transparent) 55%,
+    color-mix(in srgb, var(--color-bg-panel) 75%, transparent) 100%
+  );
+  pointer-events: none;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 45%),
+    radial-gradient(circle at 80% 70%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 40%),
+    var(--color-bg-panel);
+}
