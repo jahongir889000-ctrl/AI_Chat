@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
+import { fetchAgentReply } from '../api/chatAgent.js';
+import { USE_MOCKS } from '../config.js';
 import { mockAgent } from '../mocks/agent.js';
-import { USE_MOCKS, getMockAgentReply } from '../mocks/chatResponses.js';
+import { getMockAgentReply } from '../mocks/chatResponses.js';
 
 function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -39,25 +41,43 @@ export function useChat() {
     setIsOpen(false);
   }, []);
 
-  const sendMessage = useCallback(async (text) => {
-    const trimmed = text.trim();
-    if (!trimmed || isTyping) return;
+  const sendMessage = useCallback(
+    async (text) => {
+      const trimmed = text.trim();
+      if (!trimmed || isTyping) return;
 
-    setMessages((prev) => [...prev, makeMessage({ role: 'user', text: trimmed })]);
-    setIsTyping(true);
+      const userMsg = makeMessage({ role: 'user', text: trimmed });
+      const historyForApi = [...messages, userMsg];
 
-    try {
-      let replyText;
-      if (USE_MOCKS) {
-        replyText = await getMockAgentReply(trimmed);
-      } else {
-        replyText = await getMockAgentReply(trimmed);
+      setMessages((prev) => [...prev, userMsg]);
+      setIsTyping(true);
+
+      try {
+        let replyText;
+        if (USE_MOCKS) {
+          replyText = await getMockAgentReply(trimmed);
+        } else {
+          replyText = await fetchAgentReply(historyForApi);
+        }
+        setMessages((prev) => [...prev, makeMessage({ role: 'agent', text: replyText })]);
+      } catch (err) {
+        const fallback =
+          err instanceof Error
+            ? err.message
+            : 'Не удалось отправить сообщение. Попробуйте ещё раз.';
+        setMessages((prev) => [
+          ...prev,
+          makeMessage({
+            role: 'agent',
+            text: fallback,
+          }),
+        ]);
+      } finally {
+        setIsTyping(false);
       }
-      setMessages((prev) => [...prev, makeMessage({ role: 'agent', text: replyText })]);
-    } finally {
-      setIsTyping(false);
-    }
-  }, [isTyping]);
+    },
+    [isTyping, messages],
+  );
 
   return {
     isOpen,
